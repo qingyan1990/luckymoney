@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.Toast;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -26,9 +25,7 @@ import static de.robv.android.xposed.XposedHelpers.findClass;
 
 public class GhostLuckyMoney implements IXposedHookLoadPackage {
 
-    boolean robot = false;
     boolean hasgothongbao = true;
-//    boolean toggle = false;
     Context context;
 
     private void log(String tag, Object msg) {
@@ -76,13 +73,8 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage {
             findAndHookMethod("com.tencent.mm.booter.notification.b", loadPackageParam.classLoader, "a", b, String.class, String.class, int.class, int.class, boolean.class, new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-
-//                    toggle = (Boolean) XposedHelpers.callStaticMethod(findClass("com.tencent.mm.g.a", loadPackageParam.classLoader), "pb")
-                    // FIXME: 15/12/28 for wechat 6.3.8 pb
-//                    log("toggle is:", String.valueOf(toggle));
                     if (param.args[3].toString().equals("436207665")) {
                         String nativeurl = readxml(param.args[2].toString());
-//                        log("native url is ", nativeurl);
                         context = (Context) XposedHelpers.callStaticMethod(findClass("com.tencent.mm.sdk.platformtools.y", loadPackageParam.classLoader), "getContext");
                         Intent intent = new Intent();
                         intent.setClassName("com.tencent.mm", "com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyReceiveUI");
@@ -96,8 +88,6 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage {
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         intent.putExtra("key_native_url", nativeurl);
                         intent.putExtra("key_username", param.args[1].toString());
-//                        log("made intent :", intent.getExtras().toString());
-                        robot = true;
                         context.startActivity(intent);
                     }
                 }
@@ -110,10 +100,8 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage {
                     findAndHookMethod("com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyReceiveUI", loadPackageParam.classLoader, "onCreate", Bundle.class, new XC_MethodReplacement() {
                         @Override
                         protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-                            if (robot){
-                                Activity activity = (Activity) methodHookParam.thisObject;
-                                activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                            }
+                            Activity activity = (Activity) methodHookParam.thisObject;
+                            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
                             XposedBridge.invokeOriginalMethod(methodHookParam.method,methodHookParam.thisObject,methodHookParam.args);
                             return null;
                         }
@@ -132,8 +120,6 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage {
                     findAndHookMethod("com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyReceiveUI", loadPackageParam.classLoader, "e", int.class, int.class, String.class, j, new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            if (robot) {
-//                                log("if robot so hook for auto click", "hongbao");
                                 Class receiveui = findClass("com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyReceiveUI", loadPackageParam.classLoader);
 
                                 Button button = (Button) XposedHelpers.callStaticMethod(receiveui, "e", param.thisObject);
@@ -142,13 +128,7 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage {
                                     Random rd = new Random();
                                     Thread.sleep(rd.nextInt(1600));
                                     button.performClick();
-//                                    log("click", "get luckymoney button");
-                                } else if (!button.isShown()) {
-                                    XposedHelpers.callMethod(param.thisObject, "finish");
-                                    Toast.makeText(context, "(^O^)", Toast.LENGTH_SHORT).show();
                                 }
-                                robot = false;
-                            }
                         }
                     });
                 }
