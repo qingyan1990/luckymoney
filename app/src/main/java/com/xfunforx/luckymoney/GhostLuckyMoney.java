@@ -11,7 +11,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.StringReader;
-import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -23,10 +23,10 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 import static de.robv.android.xposed.XposedHelpers.findClass;
 
-public class GhostLuckyMoney implements IXposedHookLoadPackage {
+public class GhostLuckyMoney implements IXposedHookLoadPackage{
 
-    boolean hasgothongbao = true;
     Context context;
+    AtomicInteger count = new AtomicInteger();
 
     private void log(String tag, Object msg) {
 
@@ -74,6 +74,7 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                     if (param.args[3].toString().equals("436207665")) {
+                        count.incrementAndGet();
                         String nativeurl = readxml(param.args[2].toString());
                         context = (Context) XposedHelpers.callStaticMethod(findClass("com.tencent.mm.sdk.platformtools.y", loadPackageParam.classLoader), "getContext");
                         Intent intent = new Intent();
@@ -106,29 +107,33 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage {
                             return null;
                         }
                     });
-                    findAndHookMethod("com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyDetailUI", loadPackageParam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            if (!hasgothongbao) {
-                                hasgothongbao = true;
-                                XposedHelpers.callMethod(param.thisObject, "finish");
-                            }
-                        }
-                    });
+//                    findAndHookMethod("com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyDetailUI", loadPackageParam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
+//                        @Override
+//                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                            while (count.get() > 0){
+//                                count.decrementAndGet();
+//                                XposedHelpers.callMethod(param.thisObject, "finish");
+//                            }
+//                        }
+//                    });
                     Class j = findClass("com.tencent.mm.r.j", loadPackageParam.classLoader);
                     //button is ready for click here
                     findAndHookMethod("com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyReceiveUI", loadPackageParam.classLoader, "e", int.class, int.class, String.class, j, new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            if (count.get() > 0){
                                 Class receiveui = findClass("com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyReceiveUI", loadPackageParam.classLoader);
 
                                 Button button = (Button) XposedHelpers.callStaticMethod(receiveui, "e", param.thisObject);
-                                if (button.isShown()) {
-                                    hasgothongbao = false;
-                                    Random rd = new Random();
-                                    Thread.sleep(rd.nextInt(1600));
+                                if (button.isShown() && button.isClickable()) {
+                                    count.decrementAndGet();
                                     button.performClick();
+                                    XposedHelpers.callMethod(param.thisObject, "finish");
+                                }else{
+                                    count.decrementAndGet();
+                                    XposedHelpers.callMethod(param.thisObject, "finish");
                                 }
+                            }
                         }
                     });
                 }
