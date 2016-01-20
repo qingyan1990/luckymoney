@@ -1,3 +1,3 @@
 # luckymoney
 help you auto get luckymoney in wechat
-wechat version 6.3.7
+wechat version 6.3.9
