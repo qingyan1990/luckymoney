@@ -137,6 +137,7 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage{
                                     }
                                 }else{
                                     count.getAndAdd(-2);
+                                    changed.set(false);
                                     XposedHelpers.callMethod(param.thisObject, "finish");
                                 }
                             }
