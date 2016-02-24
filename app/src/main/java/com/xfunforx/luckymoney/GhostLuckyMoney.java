@@ -9,18 +9,13 @@ import org.xmlpull.v1.*;
 
 public class GhostLuckyMoney implements IXposedHookLoadPackage
 {
-    public String x;
-
-    public GhostLuckyMoney() {
-        this.x = "fuck";
-    }
-
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         if (!loadPackageParam.packageName.contains("tencent.mm")) {
             return;
         }
         try {
-            XposedHelpers.findAndHookMethod("com.tencent.mm.booter.notification.b", loadPackageParam.classLoader, "a", "com.tencent.mm.booter.notification.b", String.class, String.class, Integer.TYPE, Integer.TYPE, Boolean.TYPE, new XC_MethodHook() {
+            Class b = XposedHelpers.findClass("com.tencent.mm.booter.notification.b", loadPackageParam.classLoader);
+            XposedHelpers.findAndHookMethod("com.tencent.mm.booter.notification.b", loadPackageParam.classLoader, "a", b, String.class, String.class, Integer.TYPE, Integer.TYPE, Boolean.TYPE, new XC_MethodHook() {
                 protected void beforeHookedMethod(XC_MethodHook.MethodHookParam methodHookParam) throws Throwable {
                     if (!methodHookParam.args[3].toString().equals(String.valueOf(436207665L))) {
                         return;
@@ -53,10 +48,11 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage
                             queryParameter = parse.getQueryParameter("msgtype");
                             final String queryParameter2 = parse.getQueryParameter("sendid");
                             final String queryParameter3 = parse.getQueryParameter("channelid");
-                            XposedHelpers.callMethod(XposedHelpers.callStaticMethod(XposedHelpers.findClass("com.tencent.mm.model.ah",loadPackageParam.classLoader), "ts"), "d", XposedHelpers.newInstance(XposedHelpers.findClass("com.tencent.mm.plugin.luckymoney.c.x", loadPackageParam.classLoader), Integer.valueOf(queryParameter), Integer.valueOf(queryParameter3), queryParameter2, text, "", "", methodHookParam.args[1].toString(), "v1.0"));
+                            Class ab = XposedHelpers.findClass("com.tencent.mm.plugin.luckymoney.c.ab", loadPackageParam.classLoader);
+                            Class ah = XposedHelpers.findClass("com.tencent.mm.model.ah", loadPackageParam.classLoader);
+                            XposedHelpers.callMethod(XposedHelpers.callStaticMethod(ah, "tE"), "d", XposedHelpers.newInstance(ab, Integer.valueOf(queryParameter), Integer.valueOf(queryParameter3), queryParameter2, text, "", "", methodHookParam.args[1].toString(), "v1.0"));
                         }
                         catch (Exception ex) {
-                            XposedBridge.log('[' + GhostLuckyMoney.this.x + ']' + GhostLuckyMoney.this.x);
                             ex.printStackTrace();
                             final String text = queryParameter;
                             continue;
@@ -67,7 +63,7 @@ public class GhostLuckyMoney implements IXposedHookLoadPackage
             });
         }
         catch (Exception ex) {
-            XposedBridge.log('[' + this.x + ']' + this.x);
+            ex.printStackTrace();
         }
     }
 }
